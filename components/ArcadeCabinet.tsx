@@ -62,8 +62,9 @@ export const ArcadeCabinet: React.FC<ArcadeCabinetProps> = ({
 
   // When expanded, we break out of the relative positioning to fill the screen
   // This preserves the iframe in the DOM tree, preventing a reload
+  // Updated to top-16 to account for the 4rem (h-16) header banner
   const containerClass = isExpanded
-    ? "fixed inset-0 z-50 bg-black flex flex-col items-center justify-center animate-in fade-in duration-300"
+    ? "fixed top-16 bottom-0 left-0 right-0 z-50 bg-black flex flex-col items-center justify-center animate-in fade-in duration-300"
     : `relative group transition-all duration-500 ease-out transform w-full h-full flex flex-col ${isActive && !isGameRunning && !isLoading ? 'cursor-pointer hover:scale-105' : ''} ${!isActive && !isGameRunning && !isLoading ? 'opacity-50 cursor-not-allowed grayscale' : ''}`;
 
   return (
