@@ -69,6 +69,8 @@ export default function App() {
       <div className={`z-10 w-full flex flex-row gap-8 md:gap-24 items-end overflow-x-auto md:overflow-visible pb-8 md:pb-10 perspective-1000 snap-x snap-mandatory no-scrollbar justify-start md:justify-center transition-opacity duration-500`}>
         
         {/* Wrapper divs maintain layout space when cabinet goes fixed/fullscreen */}
+        
+        {/* Cabinet 1: Spirited */}
         <div className="snap-center shrink-0 first:pl-[calc(50%-8rem)] md:first:pl-0 last:pr-[calc(50%-8rem)] md:last:pr-0 relative w-64 md:w-80 h-[450px] md:h-[600px]">
             <ArcadeCabinet
               title="SPIRITED"
@@ -86,6 +88,7 @@ export default function App() {
             />
         </div>
 
+        {/* Cabinet 2: Cookie's Escape */}
         <div className="snap-center shrink-0 first:pl-[calc(50%-8rem)] md:first:pl-0 last:pr-[calc(50%-8rem)] md:last:pr-0 relative w-64 md:w-80 h-[450px] md:h-[600px]">
             <ArcadeCabinet
               title="COOKIE'S ESCAPE"
@@ -99,6 +102,24 @@ export default function App() {
               onLoadingComplete={onLoadingComplete}
               isGameRunning={activeGame === "COOKIE'S GREAT ESCAPE"}
               isExpanded={isExpanded && activeGame === "COOKIE'S GREAT ESCAPE"}
+              onExpand={() => setIsExpanded(true)}
+            />
+        </div>
+
+        {/* Cabinet 3: The Special Order */}
+        <div className="snap-center shrink-0 first:pl-[calc(50%-8rem)] md:first:pl-0 last:pr-[calc(50%-8rem)] md:last:pr-0 relative w-64 md:w-80 h-[450px] md:h-[600px]">
+            <ArcadeCabinet
+              title="THE SPECIAL ORDER"
+              description="Prepare the ultimate dish!"
+              color="purple"
+              path="/thespecialorder"
+              onPlay={() => handleGameSelect("THE SPECIAL ORDER", '/thespecialorder', 'purple')}
+              accentColor="#a855f7"
+              isActive={!loadingGame}
+              isLoading={loadingGame?.name === "THE SPECIAL ORDER"}
+              onLoadingComplete={onLoadingComplete}
+              isGameRunning={activeGame === "THE SPECIAL ORDER"}
+              isExpanded={isExpanded && activeGame === "THE SPECIAL ORDER"}
               onExpand={() => setIsExpanded(true)}
             />
         </div>
