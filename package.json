@@ -3,13 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://mckenzib.github.io",
+  "homepage": "https://www.benmckenzie.com",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build; cp CNAME build",
     "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "predeploy": "npm run build && cp CNAME dist",
+    "deploy": "cp CNAME build && gh-pages -d dist"
   },
   "dependencies": {
     "lucide-react": "^0.554.0",

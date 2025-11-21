@@ -82,7 +82,7 @@ export const ArcadeCabinet: React.FC<ArcadeCabinetProps> = ({
       `}></div>
 
       {/* Marquee / Top Header - Hidden when Expanded */}
-      <div className={`${isExpanded ? 'hidden' : 'flex'} z-10 h-20 md:h-24 w-full ${currentTheme.bg} rounded-t-xl border-b-4 ${currentTheme.border} items-center justify-center relative overflow-hidden shrink-0 mx-4 mt-1 w-[calc(100%-8px)]`}>
+      <div className={`${isExpanded ? 'hidden' : 'flex'} z-10 h-20 md:h-24 ${currentTheme.bg} rounded-t-xl border-b-4 ${currentTheme.border} items-center justify-center relative overflow-hidden shrink-0 mx-auto mt-1 w-[calc(100%-8px)]`}>
         <div className="absolute inset-0 bg-black/20 z-10"></div>
         <div className={`absolute inset-0 opacity-30 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,${accentColor}_10px,${accentColor}_20px)]`}></div>
         <h2 className={`font-arcade text-lg md:text-2xl text-center px-2 leading-tight text-white z-20 drop-shadow-md ${isHovered && !isGameRunning && 'animate-pulse'}`}>

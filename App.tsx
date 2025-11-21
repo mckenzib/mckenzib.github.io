@@ -32,7 +32,7 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-black text-white overflow-hidden flex flex-col items-center justify-between md:justify-center scanlines selection:bg-pink-500 selection:text-white py-6 md:py-0">
+    <div className={`relative min-h-screen w-full bg-black text-white overflow-hidden flex flex-col items-center justify-between md:justify-center ${isExpanded ? '' : 'scanlines'} selection:bg-pink-500 selection:text-white py-6 md:py-0`}>
       
       {/* Background Elements */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-black to-black z-0"></div>
