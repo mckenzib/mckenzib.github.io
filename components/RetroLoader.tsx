@@ -4,15 +4,14 @@ interface RetroLoaderProps {
   gameName: string;
   theme: string;
   onComplete: () => void;
-  isNavigating: boolean;
 }
 
-export const RetroLoader: React.FC<RetroLoaderProps> = ({ gameName, theme, onComplete, isNavigating }) => {
+export const RetroLoader: React.FC<RetroLoaderProps> = ({ gameName, theme, onComplete }) => {
   const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState("INITIALIZING SYSTEM");
+  const [statusText, setStatusText] = useState("INIT...");
 
   useEffect(() => {
-    const totalTime = 2500; // 2.5 seconds load
+    const totalTime = 3000; // 3 seconds load
     const intervalTime = 50;
     const steps = totalTime / intervalTime;
     let currentStep = 0;
@@ -22,13 +21,13 @@ export const RetroLoader: React.FC<RetroLoaderProps> = ({ gameName, theme, onCom
       const newProgress = Math.min(100, (currentStep / steps) * 100);
       setProgress(newProgress);
 
-      if (newProgress > 20 && newProgress < 50) setStatusText("LOADING ASSETS...");
-      if (newProgress >= 50 && newProgress < 80) setStatusText("CHECKING MEMORY...");
-      if (newProgress >= 80) setStatusText("INSERTING CARTRIDGE...");
+      if (newProgress > 20 && newProgress < 50) setStatusText("LOADING...");
+      if (newProgress >= 50 && newProgress < 80) setStatusText("BOOTING...");
+      if (newProgress >= 80) setStatusText("STARTING...");
       if (newProgress >= 100) {
-        setStatusText("READY!");
+        setStatusText("READY");
         clearInterval(interval);
-        setTimeout(onComplete, 200);
+        setTimeout(onComplete, 500);
       }
     }, intervalTime);
 
@@ -48,37 +47,31 @@ export const RetroLoader: React.FC<RetroLoaderProps> = ({ gameName, theme, onCom
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center font-pixel">
+    <div className="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center font-pixel p-4">
       
       {/* Scanlines on top of loader */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[size:100%_4px] pointer-events-none z-50"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[size:100%_4px] pointer-events-none z-50 opacity-50"></div>
 
-      <div className={`relative z-40 text-center transition-opacity duration-300 ${isNavigating ? 'opacity-0' : 'opacity-100'}`}>
-        <h2 className={`font-arcade text-3xl md:text-5xl mb-8 animate-pulse ${getColor().split(' ')[0]}`}>
+      <div className="relative z-40 text-center w-full animate-flicker">
+        <h2 className={`font-arcade text-xl md:text-2xl mb-4 animate-pulse ${getColor().split(' ')[0]}`}>
           {gameName}
         </h2>
         
-        <div className="w-80 md:w-96 h-8 border-4 border-white p-1 mb-4 relative">
+        <div className="w-full max-w-[200px] mx-auto h-4 border-2 border-white p-0.5 mb-2 relative">
           <div 
             className={`h-full ${getBgColor()} transition-all duration-75 ease-linear`}
             style={{ width: `${progress}%` }}
           ></div>
         </div>
 
-        <p className="text-white text-xl tracking-widest mt-4 uppercase animate-flicker">
+        <p className="text-white text-lg tracking-widest mt-2 uppercase">
           {statusText}
         </p>
 
-        <div className="mt-12 text-zinc-500 text-sm">
-          VRAM: 64KB OK<br/>
-          SOUND: YM2151 OK<br/>
-          INPUT: DETECTED
+        <div className="mt-4 text-zinc-600 text-xs">
+          MEM CHECK... OK
         </div>
       </div>
-
-      {/* Glitch effects purely visual */}
-      <div className="absolute top-10 left-10 w-20 h-1 bg-white opacity-20 animate-pulse"></div>
-      <div className="absolute bottom-20 right-20 w-32 h-1 bg-white opacity-10 animate-pulse"></div>
     </div>
   );
 };
