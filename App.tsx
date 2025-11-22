@@ -6,12 +6,12 @@ import { ArrowLeftCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 // Game Configuration Data
 const GAMES = [
   {
-    id: 'SPIRITED',
-    title: "SPIRITED",
-    description: "Journey through the ethereal plane.",
-    color: "cyan",
-    path: "/spirited",
-    accentColor: "#22d3ee"
+    id: "THE SPECIAL ORDER",
+    title: "THE SPECIAL ORDER",
+    description: "Prepare the ultimate dish!",
+    color: "purple",
+    path: "/thespecialorder",
+    accentColor: "#a855f7"
   },
   {
     id: "COOKIE'S GREAT ESCAPE",
@@ -22,12 +22,12 @@ const GAMES = [
     accentColor: "#f97316"
   },
   {
-    id: "THE SPECIAL ORDER",
-    title: "THE SPECIAL ORDER",
-    description: "Prepare the ultimate dish!",
-    color: "purple",
-    path: "/thespecialorder",
-    accentColor: "#a855f7"
+    id: 'SPIRITED',
+    title: "SPIRITED",
+    description: "Journey through the ethereal plane.",
+    color: "cyan",
+    path: "/spirited",
+    accentColor: "#22d3ee"
   },
   {
     id: "SPIRITED 3D",
