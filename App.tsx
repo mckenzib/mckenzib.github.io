@@ -1,21 +1,113 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArcadeCabinet } from './components/ArcadeCabinet';
 import { FloorGrid } from './components/FloorGrid';
-import { ArrowLeftCircle } from 'lucide-react';
+import { ArrowLeftCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+
+// Game Configuration Data
+const GAMES = [
+  {
+    id: 'SPIRITED',
+    title: "SPIRITED",
+    description: "Journey through the ethereal plane.",
+    color: "cyan",
+    path: "/spirited",
+    accentColor: "#22d3ee"
+  },
+  {
+    id: "COOKIE'S GREAT ESCAPE",
+    title: "COOKIE'S ESCAPE",
+    description: "Help Cookie dodge the hungry mouths!",
+    color: "orange",
+    path: "/cookiesgreatescape",
+    accentColor: "#f97316"
+  },
+  {
+    id: "THE SPECIAL ORDER",
+    title: "THE SPECIAL ORDER",
+    description: "Prepare the ultimate dish!",
+    color: "purple",
+    path: "/thespecialorder",
+    accentColor: "#a855f7"
+  },
+  {
+    id: "SPIRITED 3D",
+    title: "SPIRITED 3D",
+    description: "Enter the third dimension!",
+    color: "green",
+    path: "/spirited/3d.html",
+    accentColor: "#4ade80"
+  }
+] as const;
 
 export default function App() {
   const [loadingGame, setLoadingGame] = useState<{ name: string; path: string; theme: string } | null>(null);
-  // activeGame tracks which game is currently running in a cabinet
   const [activeGame, setActiveGame] = useState<string | null>(null);
-  // isExpanded tracks if the running game is in fullscreen mode
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Carousel State
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  
+  // Responsive Dimensions State
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Constants for Carousel Math
+  const isDesktop = windowWidth >= 768;
+  const ITEM_WIDTH = isDesktop ? 320 : 256; // w-80 vs w-64
+  const GAP = isDesktop ? 96 : 32;          // md:mr-24 vs mr-8
+
+  // Keyboard Navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isExpanded) return;
+      
+      if (e.key === 'ArrowRight') {
+        setSelectedIndex(prev => Math.min(prev + 1, GAMES.length - 1));
+      } else if (e.key === 'ArrowLeft') {
+        setSelectedIndex(prev => Math.max(prev - 1, 0));
+      } else if (e.key === 'Enter') {
+        const game = GAMES[selectedIndex];
+        handleGameSelect(game.id, game.path, game.color);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isExpanded, selectedIndex]);
+
+  // Swipe Handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartX.current) return;
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX;
+
+    if (Math.abs(diff) > 50) { // Threshold for swipe
+      if (diff > 0) {
+        // Swipe Left -> Next
+        setSelectedIndex(prev => Math.min(prev + 1, GAMES.length - 1));
+      } else {
+        // Swipe Right -> Prev
+        setSelectedIndex(prev => Math.max(prev - 1, 0));
+      }
+    }
+    touchStartX.current = null;
+  };
 
   const handleGameSelect = (name: string, path: string, theme: string) => {
     if (activeGame === name) {
-      // If already active, just expand it
       setIsExpanded(true);
     } else {
-      // Otherwise start loading sequence
       setLoadingGame({ name, path, theme });
     }
   };
@@ -31,8 +123,17 @@ export default function App() {
     setIsExpanded(false);
   };
 
+  // Calculate position to center the selected item
+  // We use margin-left on the track which is positioned at left: 50%
+  // Shift = -1 * ( (index * (width + gap)) + (width/2) )
+  const trackOffset = -1 * (selectedIndex * (ITEM_WIDTH + GAP) + (ITEM_WIDTH / 2));
+
   return (
-    <div className={`relative min-h-screen w-full bg-black text-white overflow-hidden flex flex-col items-center justify-between md:justify-center ${isExpanded ? '' : 'scanlines'} selection:bg-pink-500 selection:text-white py-6 md:py-0`}>
+    <div 
+      className={`relative min-h-screen w-full bg-black text-white overflow-hidden flex flex-col items-center justify-between md:justify-center ${isExpanded ? '' : 'scanlines'} selection:bg-pink-500 selection:text-white py-6 md:py-0`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       
       {/* Background Elements */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-black to-black z-0"></div>
@@ -65,88 +166,74 @@ export default function App() {
         <div className="absolute -inset-2 bg-pink-500/20 blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
       </div>
 
-      {/* Machines Container */}
-      <div className={`z-10 w-full flex flex-row gap-8 md:gap-24 items-end overflow-x-auto md:overflow-visible pb-8 md:pb-10 perspective-1000 snap-x snap-mandatory no-scrollbar justify-start md:justify-center transition-opacity duration-500`}>
-        
-        {/* Wrapper divs maintain layout space when cabinet goes fixed/fullscreen */}
-        
-        {/* Cabinet 1: Spirited */}
-        <div className="snap-center shrink-0 first:pl-[calc(50%-8rem)] md:first:pl-0 last:pr-[calc(50%-8rem)] md:last:pr-0 relative w-64 md:w-80 h-[450px] md:h-[600px]">
-            <ArcadeCabinet
-              title="SPIRITED"
-              description="Journey through the ethereal plane."
-              color="cyan"
-              path="/spirited"
-              onPlay={() => handleGameSelect('SPIRITED', '/spirited', 'cyan')}
-              accentColor="#22d3ee"
-              isActive={!loadingGame}
-              isLoading={loadingGame?.name === 'SPIRITED'}
-              onLoadingComplete={onLoadingComplete}
-              isGameRunning={activeGame === 'SPIRITED'}
-              isExpanded={isExpanded && activeGame === 'SPIRITED'}
-              onExpand={() => setIsExpanded(true)}
-            />
-        </div>
+      {/* Navigation Buttons (Desktop) */}
+      <div className={`hidden md:flex fixed inset-y-0 left-0 items-center px-4 z-20 transition-opacity duration-300 ${isExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <button 
+          onClick={() => setSelectedIndex(prev => Math.max(prev - 1, 0))}
+          disabled={selectedIndex === 0}
+          className="p-2 rounded-full bg-black/50 border-2 border-zinc-700 text-white hover:bg-pink-900/50 hover:border-pink-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:scale-110"
+        >
+          <ChevronLeft className="w-12 h-12" />
+        </button>
+      </div>
+      <div className={`hidden md:flex fixed inset-y-0 right-0 items-center px-4 z-20 transition-opacity duration-300 ${isExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <button 
+          onClick={() => setSelectedIndex(prev => Math.min(prev + 1, GAMES.length - 1))}
+          disabled={selectedIndex === GAMES.length - 1}
+          className="p-2 rounded-full bg-black/50 border-2 border-zinc-700 text-white hover:bg-pink-900/50 hover:border-pink-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:scale-110"
+        >
+          <ChevronRight className="w-12 h-12" />
+        </button>
+      </div>
 
-        {/* Cabinet 2: Cookie's Escape */}
-        <div className="snap-center shrink-0 first:pl-[calc(50%-8rem)] md:first:pl-0 last:pr-[calc(50%-8rem)] md:last:pr-0 relative w-64 md:w-80 h-[450px] md:h-[600px]">
-            <ArcadeCabinet
-              title="COOKIE'S ESCAPE"
-              description="Help Cookie dodge the hungry mouths!"
-              color="orange"
-              path="/cookiesgreatescape"
-              onPlay={() => handleGameSelect("COOKIE'S GREAT ESCAPE", '/cookiesgreatescape', 'orange')}
-              accentColor="#f97316"
-              isActive={!loadingGame}
-              isLoading={loadingGame?.name === "COOKIE'S GREAT ESCAPE"}
-              onLoadingComplete={onLoadingComplete}
-              isGameRunning={activeGame === "COOKIE'S GREAT ESCAPE"}
-              isExpanded={isExpanded && activeGame === "COOKIE'S GREAT ESCAPE"}
-              onExpand={() => setIsExpanded(true)}
-            />
+      {/* Machines Container (Carousel) */}
+      {/* 
+         We use a wrapper with relative positioning. 
+         The track inside uses absolute + left: 50% + margin-left to center items.
+         We REMOVED perspective-1000 from here to allow 'fixed' children (expanded view) 
+         to properly break out to the viewport context.
+      */}
+      <div className={`z-10 w-full h-[450px] md:h-[600px] relative transition-opacity duration-500`}>
+        <div 
+            className="absolute left-1/2 bottom-0 h-full flex items-end transition-all duration-500 ease-out"
+            style={{ marginLeft: `${trackOffset}px` }}
+        >
+          {GAMES.map((game, index) => (
+            <div 
+                key={game.id}
+                className={`shrink-0 relative h-full transition-all duration-500`}
+                style={{ 
+                    width: `${ITEM_WIDTH}px`,
+                    marginRight: index === GAMES.length - 1 ? 0 : `${GAP}px`
+                }}
+            >
+              <ArcadeCabinet
+                title={game.title}
+                description={game.description}
+                color={game.color as any}
+                path={game.path}
+                onPlay={() => handleGameSelect(game.id, game.path, game.color)}
+                onSelect={() => setSelectedIndex(index)}
+                isSelected={index === selectedIndex}
+                accentColor={game.accentColor}
+                isActive={!loadingGame}
+                isLoading={loadingGame?.name === game.id}
+                onLoadingComplete={onLoadingComplete}
+                isGameRunning={activeGame === game.id}
+                isExpanded={isExpanded && activeGame === game.id}
+                onExpand={() => setIsExpanded(true)}
+              />
+            </div>
+          ))}
         </div>
-
-        {/* Cabinet 3: The Special Order */}
-        <div className="snap-center shrink-0 first:pl-[calc(50%-8rem)] md:first:pl-0 last:pr-[calc(50%-8rem)] md:last:pr-0 relative w-64 md:w-80 h-[450px] md:h-[600px]">
-            <ArcadeCabinet
-              title="THE SPECIAL ORDER"
-              description="Prepare the ultimate dish!"
-              color="purple"
-              path="/thespecialorder"
-              onPlay={() => handleGameSelect("THE SPECIAL ORDER", '/thespecialorder', 'purple')}
-              accentColor="#a855f7"
-              isActive={!loadingGame}
-              isLoading={loadingGame?.name === "THE SPECIAL ORDER"}
-              onLoadingComplete={onLoadingComplete}
-              isGameRunning={activeGame === "THE SPECIAL ORDER"}
-              isExpanded={isExpanded && activeGame === "THE SPECIAL ORDER"}
-              onExpand={() => setIsExpanded(true)}
-            />
-        </div>
-
-         {/* Cabinet 4: Spirited 3D */}
-         <div className="snap-center shrink-0 first:pl-[calc(50%-8rem)] md:first:pl-0 last:pr-[calc(50%-8rem)] md:last:pr-0 relative w-64 md:w-80 h-[450px] md:h-[600px]">
-            <ArcadeCabinet
-              title="SPIRITED 3D"
-              description="Enter the third dimension!"
-              color="green"
-              path="/spirited/3d.html"
-              onPlay={() => handleGameSelect("SPIRITED 3D", '/spirited/3d.html', 'green')}
-              accentColor="#4ade80"
-              isActive={!loadingGame}
-              isLoading={loadingGame?.name === "SPIRITED 3D"}
-              onLoadingComplete={onLoadingComplete}
-              isGameRunning={activeGame === "SPIRITED 3D"}
-              isExpanded={isExpanded && activeGame === "SPIRITED 3D"}
-              onExpand={() => setIsExpanded(true)}
-            />
-        </div>
-
       </div>
 
       {/* Footer Text */}
       <div className={`relative md:fixed bottom-4 left-0 right-0 text-center z-10 opacity-60 shrink-0 mb-2 md:mb-0 transition-opacity duration-300 ${isExpanded ? 'opacity-0' : 'opacity-60'}`}>
-         <p className="font-pixel text-sm md:text-lg text-green-400 tracking-widest">INSERT COIN TO START • © 1985</p>
+         <p className="font-pixel text-sm md:text-lg text-green-400 tracking-widest">
+           {GAMES[selectedIndex].description}
+         </p>
+         <p className="text-xs text-zinc-500 mt-1">Use Arrows to Navigate • Enter to Start</p>
       </div>
 
        <style>{`

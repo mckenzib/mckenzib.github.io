@@ -46,6 +46,8 @@ interface ArcadeCabinetProps {
   color: 'cyan' | 'orange' | 'pink' | 'purple' | 'red' | 'green';
   path: string;
   onPlay: () => void;
+  onSelect: () => void;
+  isSelected: boolean;
   accentColor: string;
   isActive: boolean;
   isLoading: boolean;
@@ -60,7 +62,9 @@ export const ArcadeCabinet: React.FC<ArcadeCabinetProps> = ({
   description, 
   color, 
   path,
-  onPlay, 
+  onPlay,
+  onSelect,
+  isSelected,
   accentColor,
   isActive,
   isLoading,
@@ -119,33 +123,51 @@ export const ArcadeCabinet: React.FC<ArcadeCabinetProps> = ({
 
   const currentTheme = colorClasses[color as keyof typeof colorClasses] || colorClasses.cyan;
 
+  const handleInteraction = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isActive || isLoading || isGameRunning) return;
+    
+    if (isSelected) {
+      onPlay();
+    } else {
+      onSelect();
+    }
+  };
+
+  // Styles for selected vs unselected state
+  // If selected: full opacity, normal scale, higher z-index
+  // If not selected: reduced opacity, smaller scale, lower z-index, blur?
+  const selectionStyles = isExpanded 
+    ? '' 
+    : isSelected 
+      ? 'opacity-100 scale-100 z-20 brightness-110' 
+      : 'opacity-50 scale-90 z-10 brightness-50 hover:opacity-70 hover:scale-95 cursor-pointer';
+
   // When expanded, we break out of the relative positioning to fill the screen
-  // This preserves the iframe in the DOM tree, preventing a reload
-  // Updated to top-16 to account for the 4rem (h-16) header banner
   const containerClass = isExpanded
     ? "fixed top-16 bottom-0 left-0 right-0 z-50 bg-black flex flex-col items-center justify-center animate-in fade-in duration-300"
-    : `relative group transition-all duration-500 ease-out transform w-full h-full flex flex-col ${isActive && !isGameRunning && !isLoading ? 'cursor-pointer hover:scale-105' : ''} ${!isActive && !isGameRunning && !isLoading ? 'opacity-50 cursor-not-allowed grayscale' : ''}`;
+    : `relative group transition-all duration-500 ease-out transform w-full h-full flex flex-col ${selectionStyles} ${!isActive && !isGameRunning && !isLoading ? 'cursor-not-allowed grayscale' : ''}`;
 
   return (
     <div 
       className={containerClass}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => isActive && !isGameRunning && !isLoading && onPlay()}
+      onClick={handleInteraction}
     >
       {/* Cabinet Chassis - Hidden when Expanded */}
       <div className={`
         ${isExpanded ? 'hidden' : 'block'}
         absolute inset-0 rounded-t-2xl bg-zinc-900 border-4 ${currentTheme.border} z-0
-        ${isHovered && isActive && !isGameRunning && !isLoading ? currentTheme.glow : ''}
+        ${isSelected && !isGameRunning && !isLoading ? currentTheme.glow : ''}
         transition-shadow duration-300
       `}></div>
 
       {/* Marquee / Top Header - Hidden when Expanded */}
-      <div className={`${isExpanded ? 'hidden' : 'flex'} z-10 h-20 md:h-24 ${currentTheme.bg} rounded-t-xl border-b-4 ${currentTheme.border} items-center justify-center relative overflow-hidden shrink-0 mx-auto mt-1 w-[calc(100%-8px)]`}>
+      <div className={`${isExpanded ? 'hidden' : 'flex'} z-10 h-20 md:h-24 ${currentTheme.bg} rounded-t-xl border-b-4 ${currentTheme.border} items-center justify-center relative overflow-hidden shrink-0 mx-auto mt-1 w-[calc(100%-8px)] shrink-0`}>
         <div className="absolute inset-0 bg-black/20 z-10"></div>
         <div className={`absolute inset-0 opacity-30 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,${accentColor}_10px,${accentColor}_20px)]`}></div>
-        <h2 className={`font-arcade text-lg md:text-2xl text-center px-2 leading-tight text-white z-20 drop-shadow-md ${isHovered && !isGameRunning && 'animate-pulse'}`}>
+        <h2 className={`font-arcade text-lg md:text-2xl text-center px-2 leading-tight text-white z-20 drop-shadow-md ${isHovered && isSelected && !isGameRunning && 'animate-pulse'}`}>
           {title}
         </h2>
       </div>
@@ -209,7 +231,7 @@ export const ArcadeCabinet: React.FC<ArcadeCabinetProps> = ({
                     !isLoading && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2 md:p-4 z-10">
                             {/* Icon */}
-                            <div className={`mb-2 md:mb-4 transition-transform duration-300 ${isHovered ? 'scale-125 rotate-6' : ''}`}>
+                            <div className={`mb-2 md:mb-4 transition-transform duration-300 ${isHovered && isSelected ? 'scale-125 rotate-6' : ''}`}>
                               {color === 'cyan' && <Ghost className="w-8 h-8 md:w-12 md:h-12 text-cyan-300" />}
                               {color === 'orange' && <Cookie className="w-8 h-8 md:w-12 md:h-12 text-orange-300" />}
                               {color === 'purple' && <OnionIcon className="w-8 h-8 md:w-12 md:h-12 text-purple-300" />}
@@ -218,8 +240,8 @@ export const ArcadeCabinet: React.FC<ArcadeCabinetProps> = ({
                             </div>
 
                             {/* Insert Coin Text */}
-                            <div className={`font-pixel text-xl md:text-2xl ${currentTheme.text} ${isHovered ? 'animate-bounce' : ''}`}>
-                            {isHovered ? 'CLICK TO PLAY' : 'INSERT COIN'}
+                            <div className={`font-pixel text-xl md:text-2xl ${currentTheme.text} ${isHovered && isSelected ? 'animate-bounce' : ''}`}>
+                            {isSelected ? (isHovered ? 'CLICK TO PLAY' : 'INSERT COIN') : 'CLICK TO SELECT'}
                             </div>
                             
                             {/* Scanline overlay specific to screen */}
@@ -283,4 +305,4 @@ export const ArcadeCabinet: React.FC<ArcadeCabinetProps> = ({
       <div className={`${isExpanded ? 'hidden' : 'block'} absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-10 ${currentTheme.bg} blur-xl opacity-40 rounded-full`}></div>
     </div>
   );
-};
+}
