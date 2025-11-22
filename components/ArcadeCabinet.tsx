@@ -21,10 +21,29 @@ const OnionIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// Custom Wireframe Sphere Icon
+const SphereIcon = ({ className }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10" />
+    <path d="M12 2a15.3 15.3 0 0 0-4 10 15.3 15.3 0 0 0 4 10" />
+    <path d="M2 12h20" />
+  </svg>
+);
+
 interface ArcadeCabinetProps {
   title: string;
   description: string;
-  color: 'cyan' | 'orange' | 'pink' | 'purple';
+  color: 'cyan' | 'orange' | 'pink' | 'purple' | 'red' | 'green';
   path: string;
   onPlay: () => void;
   accentColor: string;
@@ -81,6 +100,20 @@ export const ArcadeCabinet: React.FC<ArcadeCabinetProps> = ({
       text: 'text-purple-400',
       bg: 'bg-purple-900',
       screen: 'bg-purple-950'
+    },
+    red: {
+      glow: 'shadow-[0_0_30px_rgba(239,68,68,0.4)]',
+      border: 'border-red-500',
+      text: 'text-red-400',
+      bg: 'bg-red-900',
+      screen: 'bg-red-950'
+    },
+    green: {
+      glow: 'shadow-[0_0_30px_rgba(74,222,128,0.4)]',
+      border: 'border-green-500',
+      text: 'text-green-400',
+      bg: 'bg-green-900',
+      screen: 'bg-green-950'
     }
   };
 
@@ -180,6 +213,8 @@ export const ArcadeCabinet: React.FC<ArcadeCabinetProps> = ({
                               {color === 'cyan' && <Ghost className="w-8 h-8 md:w-12 md:h-12 text-cyan-300" />}
                               {color === 'orange' && <Cookie className="w-8 h-8 md:w-12 md:h-12 text-orange-300" />}
                               {color === 'purple' && <OnionIcon className="w-8 h-8 md:w-12 md:h-12 text-purple-300" />}
+                              {color === 'red' && <SphereIcon className="w-8 h-8 md:w-12 md:h-12 text-red-300" />}
+                              {color === 'green' && <SphereIcon className="w-8 h-8 md:w-12 md:h-12 text-green-300" />}
                             </div>
 
                             {/* Insert Coin Text */}
@@ -212,8 +247,8 @@ export const ArcadeCabinet: React.FC<ArcadeCabinetProps> = ({
 
          {/* Buttons */}
          <div className="absolute right-6 md:right-8 top-1/3 flex gap-2 md:gap-3">
-            <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full shadow-[0_4px_0_rgba(0,0,0,0.5)] border-b-4 border-black active:border-b-0 active:translate-y-1 transition-all ${color === 'cyan' ? 'bg-cyan-500' : color === 'purple' ? 'bg-purple-500' : 'bg-yellow-500'}`}></div>
-            <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full shadow-[0_4px_0_rgba(0,0,0,0.5)] border-b-4 border-black active:border-b-0 active:translate-y-1 transition-all mt-3 md:mt-4 ${color === 'cyan' ? 'bg-pink-500' : color === 'purple' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full shadow-[0_4px_0_rgba(0,0,0,0.5)] border-b-4 border-black active:border-b-0 active:translate-y-1 transition-all ${color === 'cyan' ? 'bg-cyan-500' : color === 'purple' ? 'bg-purple-500' : color === 'red' ? 'bg-blue-500' : color === 'green' ? 'bg-lime-500' : 'bg-yellow-500'}`}></div>
+            <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full shadow-[0_4px_0_rgba(0,0,0,0.5)] border-b-4 border-black active:border-b-0 active:translate-y-1 transition-all mt-3 md:mt-4 ${color === 'cyan' ? 'bg-pink-500' : color === 'purple' ? 'bg-green-500' : color === 'red' ? 'bg-yellow-500' : color === 'green' ? 'bg-emerald-600' : 'bg-red-500'}`}></div>
          </div>
          
          {/* Start Buttons */}

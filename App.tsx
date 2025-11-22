@@ -124,6 +124,24 @@ export default function App() {
             />
         </div>
 
+         {/* Cabinet 4: Spirited 3D */}
+         <div className="snap-center shrink-0 first:pl-[calc(50%-8rem)] md:first:pl-0 last:pr-[calc(50%-8rem)] md:last:pr-0 relative w-64 md:w-80 h-[450px] md:h-[600px]">
+            <ArcadeCabinet
+              title="SPIRITED 3D"
+              description="Enter the third dimension!"
+              color="green"
+              path="/spirited/3d.html"
+              onPlay={() => handleGameSelect("SPIRITED 3D", '/spirited/3d.html', 'green')}
+              accentColor="#4ade80"
+              isActive={!loadingGame}
+              isLoading={loadingGame?.name === "SPIRITED 3D"}
+              onLoadingComplete={onLoadingComplete}
+              isGameRunning={activeGame === "SPIRITED 3D"}
+              isExpanded={isExpanded && activeGame === "SPIRITED 3D"}
+              onExpand={() => setIsExpanded(true)}
+            />
+        </div>
+
       </div>
 
       {/* Footer Text */}
