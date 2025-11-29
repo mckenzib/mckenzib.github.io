@@ -6,6 +6,14 @@ import { ArrowLeftCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 // Game Configuration Data
 const GAMES = [
   {
+    id: "VECTOR VENGEANCE",
+    title: "VECTOR VENGEANCE",
+    description: "Battle in the neon arena!",
+    color: "yellow",
+    path: "/vectorvengeance",
+    accentColor: "#eab308"
+  },
+  {
     id: "THE SPECIAL ORDER",
     title: "THE SPECIAL ORDER",
     description: "Prepare the ultimate dish!",
