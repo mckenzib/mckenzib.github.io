@@ -41,6 +41,7 @@ export const RetroLoader: React.FC<RetroLoaderProps> = ({ gameName, theme, onCom
     if (theme === 'red') return 'text-red-400 border-red-500 bg-red-500';
     if (theme === 'green') return 'text-green-400 border-green-500 bg-green-500';
     if (theme === 'yellow') return 'text-yellow-400 border-yellow-500 bg-yellow-500';
+    if (theme === 'blue') return 'text-blue-400 border-blue-500 bg-blue-500';
     return 'text-green-400 border-green-500 bg-green-500';
   };
   
@@ -51,6 +52,7 @@ export const RetroLoader: React.FC<RetroLoaderProps> = ({ gameName, theme, onCom
     if (theme === 'red') return 'bg-red-500';
     if (theme === 'green') return 'bg-green-500';
     if (theme === 'yellow') return 'bg-yellow-500';
+    if (theme === 'blue') return 'bg-blue-500';
     return 'bg-green-500';
   };
 

@@ -6,6 +6,14 @@ import { ArrowLeftCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 // Game Configuration Data
 const GAMES = [
   {
+    id: "PIXEL VOID",
+    title: "PIXEL VOID",
+    description: "Stare into the abyss...",
+    color: "blue",
+    path: "/pixelvoid",
+    accentColor: "#3b82f6"
+  },
+  {
     id: "VECTOR VENGEANCE",
     title: "VECTOR VENGEANCE",
     description: "Battle in the neon arena!",
