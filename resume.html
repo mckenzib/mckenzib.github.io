@@ -283,6 +283,114 @@
       text-transform: uppercase;
       pointer-events: none;
     }
+
+    /* ── Detail Panel ── */
+    #detail-panel {
+      position: fixed;
+      top: 0; right: 0;
+      width: 360px;
+      max-width: 100vw;
+      height: 100vh;
+      background: rgba(5, 5, 18, 0.97);
+      border-left: 1px solid rgba(0,255,249,0.2);
+      z-index: 8000;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #detail-panel.open {
+      transform: translateX(0);
+      box-shadow: -10px 0 40px rgba(0,0,0,0.6);
+    }
+    #detail-panel-bar {
+      height: 3px;
+      flex-shrink: 0;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+    }
+    #detail-panel-header {
+      padding: 20px 20px 14px;
+      border-bottom: 1px solid rgba(0,255,249,0.1);
+      flex-shrink: 0;
+    }
+    #detail-panel-tag {
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      margin-bottom: 8px;
+      opacity: 0.7;
+    }
+    #detail-panel-title {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+      color: #fff;
+      text-shadow: 0 0 10px currentColor;
+      line-height: 1.3;
+    }
+    #detail-panel-sub {
+      font-size: 0.65rem;
+      margin-top: 5px;
+      opacity: 0.55;
+      letter-spacing: 0.08em;
+    }
+    #detail-panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 20px;
+      font-size: 0.72rem;
+      line-height: 1.7;
+      color: rgba(0,255,249,0.85);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,255,249,0.3) transparent;
+    }
+    #detail-panel-body::-webkit-scrollbar { width: 4px; }
+    #detail-panel-body::-webkit-scrollbar-thumb { background: rgba(0,255,249,0.3); border-radius: 2px; }
+    #detail-panel-body h4 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      margin: 16px 0 8px;
+      opacity: 0.6;
+      text-transform: uppercase;
+    }
+    #detail-panel-body h4:first-child { margin-top: 0; }
+    #detail-panel-body ul {
+      padding-left: 14px;
+      margin: 0;
+    }
+    #detail-panel-body li {
+      margin-bottom: 7px;
+      position: relative;
+    }
+    #detail-panel-body li::marker { color: var(--pink); }
+    #detail-panel-body p { margin-bottom: 10px; }
+    #detail-panel-body .tag {
+      display: inline-block;
+      border: 1px solid;
+      padding: 2px 7px;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      margin: 3px 3px 3px 0;
+      opacity: 0.8;
+    }
+    #detail-close {
+      position: absolute;
+      top: 14px; right: 16px;
+      background: none;
+      border: none;
+      color: rgba(0,255,249,0.5);
+      font-size: 1.2rem;
+      cursor: pointer;
+      font-family: 'Share Tech Mono', monospace;
+      line-height: 1;
+      padding: 4px;
+      transition: color 0.15s;
+      z-index: 1;
+    }
+    #detail-close:hover { color: var(--cyan); }
   </style>
 </head>
 <body>
@@ -295,6 +403,17 @@
   <button class="zoom-btn" id="zin">+</button>
   <button class="zoom-btn" id="zout">−</button>
   <button class="zoom-btn" id="zreset" style="font-size:0.55rem;letter-spacing:0">FIT</button>
+</div>
+
+<div id="detail-panel">
+  <div id="detail-panel-bar"></div>
+  <div id="detail-panel-header" style="position:relative">
+    <button id="detail-close">&#x2715;</button>
+    <div id="detail-panel-tag"></div>
+    <div id="detail-panel-title"></div>
+    <div id="detail-panel-sub"></div>
+  </div>
+  <div id="detail-panel-body"></div>
 </div>
 
 <div id="viewport">
@@ -669,6 +788,448 @@ document.getElementById('zout').addEventListener('click', () => {
 });
 document.getElementById('zreset').addEventListener('click', fitToScreen);
 
+// ── Detail panel data ─────────────────────────────────────────────
+const nodeDetails = {
+  'n-center': {
+    tag: '// PROFILE', color: 'var(--cyan)',
+    title: 'Ben McKenzie',
+    sub: 'Sr. Software Engineering Manager · Google · Austin, TX',
+    body: `
+      <p>Hands-on senior technical leader with 25+ years of experience and a proven track record of consistent delivery, operational excellence, and solving difficult problems across the full engineering stack.</p>
+      <h4>What I bring</h4>
+      <ul>
+        <li>End-to-end delivery of web, mobile, and data pipeline products</li>
+        <li>Deep system architecture and operational knowledge</li>
+        <li>Cloud migrations, DevOps transformation, and reliability turnarounds</li>
+        <li>Passionate about mentorship and team growth</li>
+      </ul>
+      <h4>Connect</h4>
+      <p><a href="https://www.linkedin.com/in/benmckenzie/" target="_blank" style="color:var(--cyan)">LinkedIn Profile &rarr;</a></p>
+    `
+  },
+  'n-exp': {
+    tag: '// BRANCH', color: 'var(--pink)',
+    title: 'Experience',
+    sub: '25+ years across healthcare tech, fintech, and big tech',
+    body: `<p>Click any company node to see full details for that role.</p>`
+  },
+  'n-google': {
+    tag: '// EXPERIENCE · 2019–PRESENT', color: 'var(--pink)',
+    title: 'Google',
+    sub: 'Sr. Software Engineering Manager · Austin, TX',
+    body: `
+      <p>Leading software engineering teams at Google since December 2019.</p>
+      <h4>Tenure</h4>
+      <p>6+ years — Current role</p>
+    `
+  },
+  'n-optum': {
+    tag: '// EXPERIENCE · 2012–2019', color: 'var(--pink)',
+    title: 'Optum / UnitedHealth Group',
+    sub: 'Sr. Director, Engineering · Austin, TX',
+    body: `
+      <h4>Cloud &amp; DevOps</h4>
+      <ul>
+        <li>Started Cloud Center of Excellence — migrated flagship products to AWS with full HIPAA/HITRUST compliance</li>
+        <li>66% improvement in data load performance for the OPA product</li>
+        <li>Owned existing DevOps/release engineering team</li>
+      </ul>
+      <h4>Operational Reliability</h4>
+      <ul>
+        <li>Took ownership of Data Hub, CCC, CPRM, and SPC — all with chronic instability</li>
+        <li>Implemented best-practice deployment automation, instrumentation, and ChatOps</li>
+        <li>Dropped outage rates from 6/month to zero for 6 consecutive months</li>
+        <li>Improved application performance tenfold</li>
+      </ul>
+      <h4>Hands-On Engineering</h4>
+      <ul>
+        <li>Implemented Lambda + API Gateway for ChatOps integration</li>
+        <li>Instrumented Data Hub and CMA source with New Relic</li>
+        <li>Built Scala/Spark proof-of-concept for large-scale data needs</li>
+        <li>Hackathon: custom research recommendations using Spark, SparkML, EMR, DynamoDB, S3, Lambda, API Gateway</li>
+        <li>Used Spark to implement a measure set for the Adherence product</li>
+      </ul>
+      <h4>Business Impact</h4>
+      <ul>
+        <li>Grew CMA portfolio revenue from $40M → $80M</li>
+        <li>Got $60M CCC business back on track for Enterprise Analytics</li>
+        <li>Managed director of $10M Population Risk Management product</li>
+        <li>Owner of 40-person Data Hub platform group</li>
+      </ul>
+      <h4>Architecture</h4>
+      <ul>
+        <li>Pivoted from SQL Server normalized model to Hadoop/Spark for scalable data pipelines</li>
+        <li>Led MLLP/HL7 orchestration migration from Pilotfish to Mulesoft</li>
+        <li>Lead of Systems Architecture Group bridging dev and enterprise ops</li>
+      </ul>
+    `
+  },
+  'n-advisory': {
+    tag: '// EXPERIENCE · 2012–2019', color: 'var(--pink)',
+    title: 'The Advisory Board Company',
+    sub: 'Sr. Director / Director of Engineering · Austin, TX',
+    body: `
+      <h4>Roles</h4>
+      <ul>
+        <li>Sr. Director of Engineering (2015–2019) — CMA, Data Hub/Platform, Care Variation (CMO+, RIC, SPC, Pop Health)</li>
+        <li>Director of Development (2013–2019) — Crimson Market Advantage</li>
+        <li>Software Engineering Manager, Performance Technologies (2012–2019)</li>
+      </ul>
+      <h4>Process</h4>
+      <ul>
+        <li>Led product team from monthly waterfall releases to bi-weekly Agile Scrum</li>
+        <li>Led cross-team initiative to bring HealthPost acquisition into the Advisory Board data center</li>
+        <li>Integrated SSO, master data management, and ESB technologies across teams</li>
+      </ul>
+      <h4>Engineering</h4>
+      <ul>
+        <li>Transitioned to C# MVC and architected new search solution using ElasticSearch</li>
+        <li>Took over as release and defect manager for 45-person cross-geographic team</li>
+        <li>Pushed defect backlog from 200+ down to under 10</li>
+        <li>Reduced average escapees per release from 20+ to less than 1</li>
+        <li>Led move to Jira, Bitbucket, and Confluence</li>
+      </ul>
+    `
+  },
+  'n-thomson': {
+    tag: '// EXPERIENCE · 2000–2012', color: 'var(--pink)',
+    title: 'Thomson Reuters',
+    sub: 'Director of IT &amp; Engineering · Austin, TX',
+    body: `
+      <h4>Thomson Reuters Bank Insights (2010–2012)</h4>
+      <ul>
+        <li>Led product management, development, QA, tech support, and IT through Thomson Reuters integration</li>
+        <li>Completed office and server room relocation at 50%+ under initial cost estimate</li>
+        <li>Managed cross-functional team with remote QA and dev resources in Russia and India</li>
+      </ul>
+      <h4>Director of Software &amp; Development (2011–2012)</h4>
+      <ul>
+        <li>Product and technology management for Thomson Reuters Bank Insight</li>
+        <li>Oversaw acquisition integration of Highline Financial into Thomson Reuters</li>
+      </ul>
+    `
+  },
+  'n-highline': {
+    tag: '// EXPERIENCE · 2006–2010', color: 'var(--pink)',
+    title: 'Highline Financial / Highline Data',
+    sub: 'Director of IT/Engineering · Austin, TX',
+    body: `
+      <h4>Highline Financial (2006–2010)</h4>
+      <ul>
+        <li>Led engineering team through successful acquisition by Thomson Reuters</li>
+        <li>Banking division of Highline Data spun off to 25-person company funded by Spire Capital</li>
+        <li>Implemented Agile development methodology; created predictable release schedules</li>
+        <li>Managed Windows servers migration to VMware vSphere with HA and Oracle RAC</li>
+        <li>Managed disaster recovery and remote admin IT projects</li>
+        <li>Identified new vendors and managed existing vendor relationships</li>
+      </ul>
+      <h4>Highline Data — Manager of Engineering (2006–2008)</h4>
+      <ul>
+        <li>Designed complete IT and server infrastructure for high-capacity workload on limited budget</li>
+        <li>Migrated entire IT infrastructure for new company from the ground up in 3 months</li>
+        <li>Led software team working closely with product mgmt, sales, and data analysts</li>
+        <li>Completely revamped product user interface framework</li>
+      </ul>
+    `
+  },
+  'n-sheshunoff': {
+    tag: '// EXPERIENCE · 2000–2006', color: 'var(--pink)',
+    title: 'Thomson Media / Sheshunoff',
+    sub: 'Software Engineer → Manager of Banking Development · Austin, TX',
+    body: `
+      <h4>Manager of Banking Development (2004–2006)</h4>
+      <ul>
+        <li>Managed team of Java/Oracle developers and QA engineers</li>
+        <li>Added MapInfo Demand data, extended Demographics, ATM data, and GIS/mapping capabilities</li>
+        <li>Directly coded several new mapping capabilities</li>
+        <li>Transitioned servers to new hosting facility; Sun Solaris → HA Linux architecture</li>
+      </ul>
+      <h4>Software Engineer → Sr. Software Engineer (2000–2004)</h4>
+      <ul>
+        <li>Lead developer and designer of J2EE applications for financial data services</li>
+        <li>Installed and administered iPlanet, Apache, Tomcat, MySQL, Bugzilla on Solaris and Linux</li>
+        <li>Wrote high availability scripts for Sun Cluster machines</li>
+        <li>Set up Webmin and Perl scripts for single-click deployment and administration</li>
+      </ul>
+    `
+  },
+  'n-uark': {
+    tag: '// EXPERIENCE · 1997–2000', color: 'var(--pink)',
+    title: 'University of Arkansas',
+    sub: 'Research Assistant &amp; Java Developer · Fayetteville, AR',
+    body: `
+      <h4>Research Assistant — CSCE Dept (1999–2000)</h4>
+      <ul>
+        <li>Implemented AmpVIA — a Virtual Interface Architecture for Linux on AmpNet (gigabit network)</li>
+        <li>Set up and administered Linux Beowulf clusters: Pentium, Motorola PowerPC, and Motorola 68k boxes</li>
+        <li>Published: "Design, Implementation and Evaluation of Virtual Interface Architecture for Power PC Machines"</li>
+      </ul>
+      <h4>Java Developer — Computing Services (1996–1999)</h4>
+      <ul>
+        <li>Developed Java servlet applications for university computing services</li>
+        <li>Connected to Informix and SAS databases</li>
+      </ul>
+    `
+  },
+  'n-skills': {
+    tag: '// BRANCH', color: 'var(--green)',
+    title: 'Tech Skills',
+    sub: 'Click any skill node for details',
+    body: `<p>25 years of hands-on experience across the full stack — from bare-metal Linux to cloud-native serverless, from J2EE to React.</p>`
+  },
+  'n-lang': {
+    tag: '// SKILLS', color: 'var(--green)',
+    title: 'Languages',
+    sub: 'Hands-on experience across multiple paradigms',
+    body: `
+      <h4>Proficient</h4>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Java</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Python</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Scala</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">C#</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">NodeJS</span>
+      <h4>Working Knowledge</h4>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Ruby</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">HTML5</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Objective-C</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Perl</span>
+    `
+  },
+  'n-frontend': {
+    tag: '// SKILLS', color: 'var(--green)',
+    title: 'Frontend / Mobile',
+    sub: 'Modern UI and mobile frameworks',
+    body: `
+      <span class="tag" style="color:var(--green);border-color:var(--green)">React</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Angular</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">HTML5</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">iOS (Objective-C)</span>
+    `
+  },
+  'n-data': {
+    tag: '// SKILLS', color: 'var(--green)',
+    title: 'Data &amp; Databases',
+    sub: 'Relational, NoSQL, and big data',
+    body: `
+      <h4>Big Data</h4>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Apache Spark</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">SparkML</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Hadoop / EMR</span>
+      <h4>Relational</h4>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">PostgreSQL</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">MySQL</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">SQL Server</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Oracle</span>
+      <h4>NoSQL / Search</h4>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">MongoDB</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">DynamoDB</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">ElasticSearch</span>
+      <h4>Analytics</h4>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">MicroStrategy</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Mulesoft (HL7/MLLP)</span>
+    `
+  },
+  'n-cloud': {
+    tag: '// SKILLS', color: 'var(--green)',
+    title: 'Cloud &amp; DevOps',
+    sub: 'AWS-first, infrastructure as code, ChatOps',
+    body: `
+      <h4>AWS Services</h4>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">EC2</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">S3</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">EMR</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">EKS</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Lambda</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">API Gateway</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">DynamoDB</span>
+      <h4>IaC &amp; Containers</h4>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Terraform</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Packer</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Docker</span>
+      <h4>Observability &amp; CI/CD</h4>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">New Relic</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Bamboo</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">ChatOps (Lambda + HipChat)</span>
+    `
+  },
+  'n-infra': {
+    tag: '// SKILLS', color: 'var(--green)',
+    title: 'Infrastructure',
+    sub: 'Bare metal to virtualized to cloud',
+    body: `
+      <h4>OS &amp; Web Servers</h4>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Linux</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Windows</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Apache</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Tomcat</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">IIS</span>
+      <h4>Virtualization</h4>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">VMware vSphere</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Oracle RAC (HA)</span>
+      <h4>Integration</h4>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Mulesoft</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">HL7 / MLLP</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">HIPAA / HITRUST</span>
+    `
+  },
+  'n-process': {
+    tag: '// SKILLS', color: 'var(--green)',
+    title: 'Process &amp; Methodology',
+    sub: 'Agile transformation and tooling',
+    body: `
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Agile Scrum</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Kanban</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Jira</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Confluence</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">Bitbucket</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">FogBugz</span>
+      <span class="tag" style="color:var(--green);border-color:var(--green)">CI/CD best practices</span>
+    `
+  },
+  'n-edu': {
+    tag: '// BRANCH', color: 'var(--yellow)',
+    title: 'Education',
+    sub: 'Business + Computer Science foundation',
+    body: `<p>Click a school node for details.</p>`
+  },
+  'n-ut': {
+    tag: '// EDUCATION · 2011–2014', color: 'var(--yellow)',
+    title: 'UT Austin — McCombs School of Business',
+    sub: 'Master of Business Administration',
+    body: `
+      <h4>Degree</h4>
+      <p>MBA — Business Administration and Management</p>
+      <h4>Key Coursework</h4>
+      <ul>
+        <li>Advanced Marketing Management</li>
+        <li>Corporate Finance</li>
+        <li>Strategic Management</li>
+        <li>Operations Management</li>
+        <li>Financial Accounting</li>
+      </ul>
+    `
+  },
+  'n-uofa': {
+    tag: '// EDUCATION · 1996–2000', color: 'var(--yellow)',
+    title: 'University of Arkansas at Fayetteville',
+    sub: 'B.S. Computer Science, Minor Mathematical Sciences',
+    body: `
+      <h4>Honors</h4>
+      <ul>
+        <li>Magna Cum Laude</li>
+        <li>Phi Beta Kappa Honors Society</li>
+      </ul>
+      <h4>Research</h4>
+      <p>Published undergraduate research on Virtual Interface Architecture for Power PC Machines (University of Arkansas Research Journal, 2000)</p>
+    `
+  },
+  'n-certs': {
+    tag: '// BRANCH', color: 'var(--purple)',
+    title: 'Certifications',
+    sub: 'Continuous learning in AI and cloud',
+    body: `<p>Click any cert for details.</p>`
+  },
+  'n-cert1': {
+    tag: '// CERTIFICATION · 2024', color: 'var(--purple)',
+    title: 'Generative AI with Large Language Models',
+    sub: 'DeepLearning.AI · March 2024',
+    body: `<p>Covers LLM fundamentals, prompt engineering, fine-tuning techniques, and deploying generative AI applications in production.</p>`
+  },
+  'n-cert2': {
+    tag: '// CERTIFICATION · 2024', color: 'var(--purple)',
+    title: 'Neural Networks &amp; Deep Learning',
+    sub: 'DeepLearning.AI · February 2024',
+    body: `<p>Foundations of neural network architecture, backpropagation, activation functions, and deep learning best practices.</p>`
+  },
+  'n-cert3': {
+    tag: '// CERTIFICATION · 2024', color: 'var(--purple)',
+    title: 'Managing Cloud Infrastructure with Terraform',
+    sub: 'Google · January 2024',
+    body: `<p>Infrastructure as code using Terraform for provisioning and managing cloud resources on Google Cloud Platform.</p>`
+  },
+  'n-cert4': {
+    tag: '// CERTIFICATION · 2020', color: 'var(--purple)',
+    title: 'Foundational Data, ML &amp; AI Tasks in Google Cloud',
+    sub: 'Google · December 2020',
+    body: `<p>Hands-on experience with GCP data, machine learning, and AI services including BigQuery, AutoML, and AI Platform.</p>`
+  },
+  'n-str': {
+    tag: '// BRANCH', color: 'var(--orange)',
+    title: 'Core Strengths',
+    sub: 'What makes the difference',
+    body: `<p>Click any strength node for details.</p>`
+  },
+  'n-s1': {
+    tag: '// STRENGTH', color: 'var(--orange)',
+    title: 'Technical Leadership',
+    sub: 'Hands-on from day one to present',
+    body: `
+      <ul>
+        <li>25+ years writing code while leading teams — never stopped being hands-on</li>
+        <li>Bridges the gap between engineering and business stakeholders</li>
+        <li>Lead of Systems Architecture Group at Optum, connecting dev and enterprise ops</li>
+        <li>Comfortable owning multi-million dollar product portfolios and individual pull requests simultaneously</li>
+      </ul>
+    `
+  },
+  'n-s2': {
+    tag: '// STRENGTH', color: 'var(--orange)',
+    title: 'Operational Reliability',
+    sub: 'Turns around broken systems',
+    body: `
+      <ul>
+        <li>Multiple turnarounds of unstable, high-incident production systems</li>
+        <li>Reduced outages from 6/month to zero across multiple products at Optum</li>
+        <li>Improved application performance tenfold through instrumentation and monitoring</li>
+        <li>Passion for automation, observability, and ChatOps to keep systems healthy</li>
+        <li>Personally set up and maintained bare-metal, VMware, and AWS infrastructure</li>
+      </ul>
+    `
+  },
+  'n-s3': {
+    tag: '// STRENGTH', color: 'var(--orange)',
+    title: 'People &amp; Mentorship',
+    sub: 'Growing engineers into leaders',
+    body: `
+      <ul>
+        <li>Empowers team members to take ownership of their work</li>
+        <li>Guides career growth beyond formal reporting structures</li>
+        <li>Built and scaled multiple engineering organizations from small teams to 40+ people</li>
+        <li>Mentored both individual contributors and directors</li>
+      </ul>
+    `
+  }
+};
+
+// ── Detail panel logic ────────────────────────────────────────────
+const panel      = document.getElementById('detail-panel');
+const panelBar   = document.getElementById('detail-panel-bar');
+const panelTag   = document.getElementById('detail-panel-tag');
+const panelTitle = document.getElementById('detail-panel-title');
+const panelSub   = document.getElementById('detail-panel-sub');
+const panelBody  = document.getElementById('detail-panel-body');
+const panelClose = document.getElementById('detail-close');
+
+function openPanel(nodeId) {
+  const d = nodeDetails[nodeId];
+  if (!d) return;
+  panelBar.style.background   = d.color;
+  panelBar.style.boxShadow    = `0 0 10px ${d.color}`;
+  panelTag.style.color        = d.color;
+  panelTag.textContent        = d.tag;
+  panelTitle.style.textShadow = `0 0 10px ${d.color}`;
+  panelTitle.innerHTML        = d.title;
+  panelSub.textContent        = d.sub;
+  panelBody.innerHTML         = d.body;
+  panel.classList.add('open');
+}
+
+function closePanel() {
+  panel.classList.remove('open');
+}
+
+panelClose.addEventListener('click', closePanel);
+
 // ── Node highlight on click ───────────────────────────────────────
 const mapEl = document.getElementById('map');
 document.querySelectorAll('.node').forEach(node => {
@@ -679,8 +1240,10 @@ document.querySelectorAll('.node').forEach(node => {
     if (!active) {
       node.classList.add('node-active');
       mapEl.classList.add('has-active');
+      openPanel(node.id);
     } else {
       mapEl.classList.remove('has-active');
+      closePanel();
     }
   });
 });
@@ -689,6 +1252,7 @@ viewport.addEventListener('click', e => {
   if (!e.target.closest('.node')) {
     document.querySelectorAll('.node').forEach(n => n.classList.remove('node-active'));
     mapEl.classList.remove('has-active');
+    closePanel();
   }
 });
 </script>
