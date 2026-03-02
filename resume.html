@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BEN McKENZIE // NEURAL PROFILE</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+    :root {
+      --cyan: #00fff9;
+      --pink: #ff2d78;
+      --yellow: #f5f500;
+      --green: #00ff88;
+      --purple: #bf5fff;
+      --orange: #ff8c00;
+      --bg: #050510;
+      --node-bg: rgba(5, 5, 20, 0.92);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Share Tech Mono', monospace;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Scanlines */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    #canvas-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+    }
+
+    /* ── Map viewport ── */
+    #viewport {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      cursor: grab;
+      overflow: hidden;
+    }
+    #viewport.dragging { cursor: grabbing; }
+
+    #map {
+      position: absolute;
+      top: 0; left: 0;
+      width: 4000px;
+      height: 3000px;
+      transform-origin: 0 0;
+    }
+
+    /* SVG connector lines */
+    #lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    /* ── Nodes ── */
+    .node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      border: 1px solid;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: box-shadow 0.2s, transform 0.2s;
+      background: var(--node-bg);
+      backdrop-filter: blur(4px);
+      user-select: none;
+    }
+
+    .node:hover {
+      transform: translate(-50%, -50%) scale(1.06);
+      z-index: 100;
+    }
+
+    /* Center node */
+    .node-center {
+      border-color: var(--cyan);
+      box-shadow: 0 0 30px rgba(0,255,249,0.4), inset 0 0 20px rgba(0,255,249,0.05);
+      text-align: center;
+      padding: 20px 28px;
+    }
+    .node-center .name {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 1.5rem;
+      color: #fff;
+      text-shadow: 0 0 12px var(--cyan);
+      letter-spacing: 0.1em;
+    }
+    .node-center .title {
+      font-size: 0.72rem;
+      color: var(--cyan);
+      letter-spacing: 0.2em;
+      margin-top: 4px;
+    }
+    .node-center .location {
+      font-size: 0.62rem;
+      color: rgba(0,255,249,0.45);
+      margin-top: 3px;
+      letter-spacing: 0.15em;
+    }
+
+    /* Branch nodes (section headers) */
+    .node-branch {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-align: center;
+      padding: 10px 18px;
+    }
+
+    /* Leaf nodes */
+    .node-leaf {
+      font-size: 0.68rem;
+      max-width: 220px;
+      line-height: 1.5;
+    }
+    .node-leaf .leaf-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    .node-leaf .leaf-sub {
+      font-size: 0.6rem;
+      opacity: 0.6;
+      margin-bottom: 4px;
+    }
+    .node-leaf .leaf-body {
+      font-size: 0.62rem;
+      opacity: 0.8;
+      line-height: 1.55;
+    }
+    .node-leaf ul {
+      padding-left: 12px;
+      margin-top: 4px;
+    }
+    .node-leaf ul li {
+      margin-bottom: 3px;
+    }
+
+    /* Color themes per branch */
+    .theme-experience  { border-color: var(--pink);   box-shadow: 0 0 14px rgba(255,45,120,0.25); }
+    .theme-experience  .leaf-title, .theme-experience.node-branch  { color: var(--pink);   text-shadow: 0 0 8px var(--pink); }
+
+    .theme-skills      { border-color: var(--green);  box-shadow: 0 0 14px rgba(0,255,136,0.25); }
+    .theme-skills      .leaf-title, .theme-skills.node-branch      { color: var(--green);  text-shadow: 0 0 8px var(--green); }
+
+    .theme-education   { border-color: var(--yellow); box-shadow: 0 0 14px rgba(245,245,0,0.25); }
+    .theme-education   .leaf-title, .theme-education.node-branch   { color: var(--yellow); text-shadow: 0 0 8px var(--yellow); }
+
+    .theme-certs       { border-color: var(--purple); box-shadow: 0 0 14px rgba(191,95,255,0.25); }
+    .theme-certs       .leaf-title, .theme-certs.node-branch       { color: var(--purple); text-shadow: 0 0 8px var(--purple); }
+
+    .theme-strengths   { border-color: var(--orange); box-shadow: 0 0 14px rgba(255,140,0,0.25); }
+    .theme-strengths   .leaf-title, .theme-strengths.node-branch   { color: var(--orange); text-shadow: 0 0 8px var(--orange); }
+
+    /* Corner brackets */
+    .node::before, .node::after {
+      content: '';
+      position: absolute;
+      width: 8px; height: 8px;
+    }
+    .node::before { top: 3px; left: 3px; border-top: 1px solid currentColor; border-left: 1px solid currentColor; }
+    .node::after  { bottom: 3px; right: 3px; border-bottom: 1px solid currentColor; border-right: 1px solid currentColor; }
+    .node-center::before, .node-center::after { color: var(--cyan); }
+    .theme-experience::before, .theme-experience::after { color: var(--pink); }
+    .theme-skills::before,     .theme-skills::after     { color: var(--green); }
+    .theme-education::before,  .theme-education::after  { color: var(--yellow); }
+    .theme-certs::before,      .theme-certs::after      { color: var(--purple); }
+    .theme-strengths::before,  .theme-strengths::after  { color: var(--orange); }
+
+    /* ── HUD ── */
+    #hud {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9000;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-size: 0.65rem;
+      color: rgba(0,255,249,0.45);
+      letter-spacing: 0.15em;
+      pointer-events: none;
+    }
+
+    #back-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 9000;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--cyan);
+      border: 1px solid rgba(0,255,249,0.4);
+      background: rgba(5,5,16,0.85);
+      padding: 8px 14px;
+      cursor: pointer;
+      letter-spacing: 0.15em;
+      text-decoration: none;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    #back-btn:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 12px rgba(0,255,249,0.3);
+    }
+
+    #zoom-controls {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9000;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .zoom-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1rem;
+      color: var(--cyan);
+      border: 1px solid rgba(0,255,249,0.4);
+      background: rgba(5,5,16,0.85);
+      width: 34px; height: 34px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: box-shadow 0.2s;
+    }
+    .zoom-btn:hover { box-shadow: 0 0 10px rgba(0,255,249,0.3); }
+
+    #title-badge {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9000;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: rgba(0,255,249,0.4);
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="canvas-bg"></canvas>
+
+<a href="/" id="back-btn">&larr; BACK</a>
+<div id="title-badge">// NEURAL PROFILE MAP //</div>
+<div id="zoom-controls">
+  <button class="zoom-btn" id="zin">+</button>
+  <button class="zoom-btn" id="zout">−</button>
+  <button class="zoom-btn" id="zreset" style="font-size:0.55rem;letter-spacing:0">FIT</button>
+</div>
+
+<div id="viewport">
+  <div id="map">
+    <svg id="lines"></svg>
+
+    <!-- CENTER -->
+    <div class="node node-center" id="n-center" style="left:2000px;top:1500px">
+      <div class="name">BEN McKENZIE</div>
+      <div class="title">SR. SOFTWARE ENGINEERING MANAGER // GOOGLE</div>
+      <div class="location">&#9656; AUSTIN, TX &nbsp;|&nbsp; <a href="https://www.linkedin.com/in/benmckenzie/" target="_blank" style="color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(0,255,249,0.3);">LINKEDIN PROFILE</a></div>
+    </div>
+
+    <!-- ══ EXPERIENCE BRANCH ══ -->
+    <div class="node node-branch theme-experience" id="n-exp" style="left:1050px;top:1200px">EXPERIENCE</div>
+
+    <div class="node node-leaf theme-experience" id="n-google" style="left:600px;top:850px">
+      <div class="leaf-title">Google</div>
+      <div class="leaf-sub">Sr. Software Engineering Manager &nbsp;|&nbsp; Dec 2019–Present</div>
+      <div class="leaf-body">Austin, TX</div>
+    </div>
+
+    <div class="node node-leaf theme-experience" id="n-optum" style="left:580px;top:1100px">
+      <div class="leaf-title">Optum / UnitedHealth Group</div>
+      <div class="leaf-sub">Sr. Director, Engineering &nbsp;|&nbsp; 2012–2019</div>
+      <div class="leaf-body">
+        <ul>
+          <li>Led Cloud Center of Excellence — AWS migration w/ HIPAA/HITRUST</li>
+          <li>66% improvement in data load for flagship OPA product</li>
+          <li>Dropped outages from 6/mo → 0 for 6 months across multiple products</li>
+          <li>Grew CMA portfolio from $40M → $80M revenue</li>
+          <li>Owner of 40-person Data Hub platform group</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="node node-leaf theme-experience" id="n-advisory" style="left:430px;top:1380px">
+      <div class="leaf-title">The Advisory Board Co.</div>
+      <div class="leaf-sub">Sr. Director / Director &nbsp;|&nbsp; 2012–2019</div>
+      <div class="leaf-body">
+        <ul>
+          <li>CMA, Data Hub/Platform, Care Variation (CMO+, RIC, SPC, Pop Health)</li>
+          <li>Waterfall → bi-weekly Agile Scrum releases</li>
+          <li>Led ChatOps: Lambda + API Gateway + HipChat integration</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="node node-leaf theme-experience" id="n-thomson" style="left:520px;top:1640px">
+      <div class="leaf-title">Thomson Reuters</div>
+      <div class="leaf-sub">Dir. IT &amp; Engineering &nbsp;|&nbsp; 2000–2012</div>
+      <div class="leaf-body">
+        <ul>
+          <li>Bank Insights — led product mgmt, dev, QA, IT</li>
+          <li>Office/server relocation at 50% under budget</li>
+          <li>Managed Russia + India remote teams</li>
+          <li>Acquired Highline Financial → Thomson Reuters</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="node node-leaf theme-experience" id="n-highline" style="left:700px;top:1880px">
+      <div class="leaf-title">Highline Financial / Highline Data</div>
+      <div class="leaf-sub">Dir. IT/Engineering &nbsp;|&nbsp; 2006–2010</div>
+      <div class="leaf-body">
+        <ul>
+          <li>Led engineering through TR acquisition</li>
+          <li>Implemented Agile; VMware vSphere + Oracle RAC</li>
+          <li>Designed full IT infra for startup from scratch in 3 months</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="node node-leaf theme-experience" id="n-sheshunoff" style="left:980px;top:2020px">
+      <div class="leaf-title">Sheshunoff / Thomson Media</div>
+      <div class="leaf-sub">Software Engineer → Mgr &nbsp;|&nbsp; 2000–2006</div>
+      <div class="leaf-body">
+        <ul>
+          <li>Lead J2EE developer for financial data products</li>
+          <li>Added MapInfo, GIS/mapping, ATM datasets</li>
+          <li>Sun Solaris → HA Linux migration</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="node node-leaf theme-experience" id="n-uark" style="left:1250px;top:2080px">
+      <div class="leaf-title">University of Arkansas</div>
+      <div class="leaf-sub">Research Asst + Java Dev &nbsp;|&nbsp; 1996–2000</div>
+      <div class="leaf-body">
+        <ul>
+          <li>Implemented AmpVIA (Virtual Interface Architecture) on Linux</li>
+          <li>Managed Linux Beowulf clusters (PowerPC, x86, 68k)</li>
+          <li>Java servlet apps for university computing services</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ══ SKILLS BRANCH ══ -->
+    <div class="node node-branch theme-skills" id="n-skills" style="left:2000px;top:900px">TECH SKILLS</div>
+
+    <div class="node node-leaf theme-skills" id="n-lang" style="left:1700px;top:620px">
+      <div class="leaf-title">Languages</div>
+      <div class="leaf-body">Java &nbsp;·&nbsp; Python &nbsp;·&nbsp; Scala &nbsp;·&nbsp; C# &nbsp;·&nbsp; Ruby<br>NodeJS &nbsp;·&nbsp; HTML5 &nbsp;·&nbsp; Objective-C &nbsp;·&nbsp; Perl</div>
+    </div>
+
+    <div class="node node-leaf theme-skills" id="n-frontend" style="left:2050px;top:560px">
+      <div class="leaf-title">Frontend / Mobile</div>
+      <div class="leaf-body">React &nbsp;·&nbsp; Angular &nbsp;·&nbsp; HTML5 &nbsp;·&nbsp; iOS (Obj-C)</div>
+    </div>
+
+    <div class="node node-leaf theme-skills" id="n-data" style="left:2370px;top:620px">
+      <div class="leaf-title">Data &amp; Databases</div>
+      <div class="leaf-body">Spark &nbsp;·&nbsp; Hadoop &nbsp;·&nbsp; SparkML &nbsp;·&nbsp; PostgreSQL<br>MySQL &nbsp;·&nbsp; SQL Server &nbsp;·&nbsp; Oracle &nbsp;·&nbsp; MongoDB<br>DynamoDB &nbsp;·&nbsp; ElasticSearch &nbsp;·&nbsp; MicroStrategy</div>
+    </div>
+
+    <div class="node node-leaf theme-skills" id="n-cloud" style="left:2550px;top:850px">
+      <div class="leaf-title">Cloud &amp; DevOps</div>
+      <div class="leaf-body">AWS (EC2, S3, EMR, EKS, Lambda, API GW)<br>Terraform &nbsp;·&nbsp; Packer &nbsp;·&nbsp; Docker<br>New Relic &nbsp;·&nbsp; Bamboo CI/CD &nbsp;·&nbsp; ChatOps</div>
+    </div>
+
+    <div class="node node-leaf theme-skills" id="n-infra" style="left:2480px;top:1120px">
+      <div class="leaf-title">Infrastructure</div>
+      <div class="leaf-body">Linux &nbsp;·&nbsp; Windows &nbsp;·&nbsp; VMware vSphere<br>Tomcat &nbsp;·&nbsp; IIS &nbsp;·&nbsp; Apache &nbsp;·&nbsp; Mulesoft (HL7/MLLP)</div>
+    </div>
+
+    <div class="node node-leaf theme-skills" id="n-process" style="left:2350px;top:1330px">
+      <div class="leaf-title">Process &amp; Methodology</div>
+      <div class="leaf-body">Agile Scrum &amp; Kanban &nbsp;·&nbsp; Jira / Confluence<br>Bitbucket &nbsp;·&nbsp; FogBugz &nbsp;·&nbsp; CI/CD best practices</div>
+    </div>
+
+    <!-- ══ EDUCATION BRANCH ══ -->
+    <div class="node node-branch theme-education" id="n-edu" style="left:2950px;top:1500px">EDUCATION</div>
+
+    <div class="node node-leaf theme-education" id="n-ut" style="left:3250px;top:1250px">
+      <div class="leaf-title">UT Austin — McCombs School of Business</div>
+      <div class="leaf-sub">MBA &nbsp;|&nbsp; 2011–2014</div>
+      <div class="leaf-body">Advanced Marketing, Corporate Finance,<br>Strategic Mgmt, Operations, Financial Accounting</div>
+    </div>
+
+    <div class="node node-leaf theme-education" id="n-uofa" style="left:3280px;top:1520px">
+      <div class="leaf-title">University of Arkansas at Fayetteville</div>
+      <div class="leaf-sub">B.S. Computer Science, Minor Math &nbsp;|&nbsp; 1996–2000</div>
+      <div class="leaf-body">Magna Cum Laude &nbsp;·&nbsp; Phi Beta Kappa Honors Society</div>
+    </div>
+
+    <!-- ══ CERTS BRANCH ══ -->
+    <div class="node node-branch theme-certs" id="n-certs" style="left:2800px;top:1900px">CERTIFICATIONS</div>
+
+    <div class="node node-leaf theme-certs" id="n-cert1" style="left:3100px;top:1800px">
+      <div class="leaf-title">Generative AI with LLMs</div>
+      <div class="leaf-sub">DeepLearning.AI &nbsp;|&nbsp; Mar 2024</div>
+    </div>
+    <div class="node node-leaf theme-certs" id="n-cert2" style="left:3150px;top:1970px">
+      <div class="leaf-title">Neural Networks &amp; Deep Learning</div>
+      <div class="leaf-sub">DeepLearning.AI &nbsp;|&nbsp; Feb 2024</div>
+    </div>
+    <div class="node node-leaf theme-certs" id="n-cert3" style="left:3050px;top:2130px">
+      <div class="leaf-title">Cloud Infrastructure w/ Terraform</div>
+      <div class="leaf-sub">Google &nbsp;|&nbsp; Jan 2024</div>
+    </div>
+    <div class="node node-leaf theme-certs" id="n-cert4" style="left:2850px;top:2230px">
+      <div class="leaf-title">Foundational Data, ML &amp; AI — Google Cloud</div>
+      <div class="leaf-sub">Google &nbsp;|&nbsp; Dec 2020</div>
+    </div>
+
+    <!-- ══ STRENGTHS BRANCH ══ -->
+    <div class="node node-branch theme-strengths" id="n-str" style="left:2000px;top:2100px">STRENGTHS</div>
+
+    <div class="node node-leaf theme-strengths" id="n-s1" style="left:1650px;top:2280px">
+      <div class="leaf-title">Technical Leadership</div>
+      <div class="leaf-body">25+ yrs hands-on engineering.<br>Bridges dev ↔ ops communication gaps.</div>
+    </div>
+    <div class="node node-leaf theme-strengths" id="n-s2" style="left:1950px;top:2350px">
+      <div class="leaf-title">Operational Reliability</div>
+      <div class="leaf-body">Turned around instability at multiple orgs.<br>6/mo outages → 0 for 6 months.</div>
+    </div>
+    <div class="node node-leaf theme-strengths" id="n-s3" style="left:2270px;top:2280px">
+      <div class="leaf-title">People &amp; Mentorship</div>
+      <div class="leaf-body">Empowers teams, guides career growth,<br>mentors beyond formal reporting.</div>
+    </div>
+
+  </div><!-- /map -->
+</div><!-- /viewport -->
+
+<div id="hud">
+  <span>DRAG TO NAVIGATE</span>
+  <span style="color:rgba(0,255,249,0.2)">|</span>
+  <span>SCROLL / PINCH TO ZOOM</span>
+  <span style="color:rgba(0,255,249,0.2)">|</span>
+  <span>CLICK NODES TO HIGHLIGHT</span>
+</div>
+
+<script>
+// ── Background rain ──────────────────────────────────────────────
+const bgCanvas = document.getElementById('canvas-bg');
+const bgCtx = bgCanvas.getContext('2d');
+function resizeBg() { bgCanvas.width = window.innerWidth; bgCanvas.height = window.innerHeight; }
+resizeBg();
+window.addEventListener('resize', resizeBg);
+const chars = 'アイウエオ0123456789ABCDEF><:/\\|';
+let drops = [];
+function initDrops() { drops = Array(Math.floor(bgCanvas.width / 14)).fill(1); }
+initDrops();
+window.addEventListener('resize', initDrops);
+setInterval(() => {
+  bgCtx.fillStyle = 'rgba(5,5,16,0.06)';
+  bgCtx.fillRect(0,0,bgCanvas.width,bgCanvas.height);
+  drops.forEach((y, i) => {
+    bgCtx.fillStyle = Math.random() > 0.97 ? '#ff2d78' : '#00fff9';
+    bgCtx.font = '13px "Share Tech Mono"';
+    bgCtx.globalAlpha = 0.18;
+    bgCtx.fillText(chars[Math.floor(Math.random()*chars.length)], i*14, y*14);
+    bgCtx.globalAlpha = 1;
+    if (y*14 > bgCanvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  });
+}, 50);
+
+// ── SVG lines ─────────────────────────────────────────────────────
+const svg = document.getElementById('lines');
+
+function nodeCenter(el) {
+  const l = parseFloat(el.style.left);
+  const t = parseFloat(el.style.top);
+  return { x: l, y: t };
+}
+
+const connections = [
+  // center → branches
+  ['n-center','n-exp',    '#ff2d78'],
+  ['n-center','n-skills', '#00ff88'],
+  ['n-center','n-edu',    '#f5f500'],
+  ['n-center','n-certs',  '#bf5fff'],
+  ['n-center','n-str',    '#ff8c00'],
+  // experience leaves
+  ['n-exp','n-google',    '#ff2d78'],
+  ['n-exp','n-optum',     '#ff2d78'],
+  ['n-exp','n-advisory',  '#ff2d78'],
+  ['n-exp','n-thomson',   '#ff2d78'],
+  ['n-exp','n-highline',  '#ff2d78'],
+  ['n-exp','n-sheshunoff','#ff2d78'],
+  ['n-exp','n-uark',      '#ff2d78'],
+  // skills leaves
+  ['n-skills','n-lang',    '#00ff88'],
+  ['n-skills','n-frontend','#00ff88'],
+  ['n-skills','n-data',    '#00ff88'],
+  ['n-skills','n-cloud',   '#00ff88'],
+  ['n-skills','n-infra',   '#00ff88'],
+  ['n-skills','n-process', '#00ff88'],
+  // edu leaves
+  ['n-edu','n-ut',   '#f5f500'],
+  ['n-edu','n-uofa', '#f5f500'],
+  // cert leaves
+  ['n-certs','n-cert1','#bf5fff'],
+  ['n-certs','n-cert2','#bf5fff'],
+  ['n-certs','n-cert3','#bf5fff'],
+  ['n-certs','n-cert4','#bf5fff'],
+  // strength leaves
+  ['n-str','n-s1','#ff8c00'],
+  ['n-str','n-s2','#ff8c00'],
+  ['n-str','n-s3','#ff8c00'],
+];
+
+function drawLines() {
+  svg.innerHTML = '';
+  connections.forEach(([aId, bId, color]) => {
+    const a = document.getElementById(aId);
+    const b = document.getElementById(bId);
+    if (!a || !b) return;
+    const ac = nodeCenter(a);
+    const bc = nodeCenter(b);
+    const mx = (ac.x + bc.x) / 2;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','path');
+    const d = `M ${ac.x} ${ac.y} C ${mx} ${ac.y}, ${mx} ${bc.y}, ${bc.x} ${bc.y}`;
+    line.setAttribute('d', d);
+    line.setAttribute('stroke', color);
+    line.setAttribute('stroke-width', '1.5');
+    line.setAttribute('fill', 'none');
+    line.setAttribute('opacity', '0.35');
+    svg.appendChild(line);
+  });
+}
+drawLines();
+
+// ── Pan & Zoom ────────────────────────────────────────────────────
+const viewport = document.getElementById('viewport');
+const map = document.getElementById('map');
+
+let scale = 0.5;
+let tx = 0, ty = 0;
+let dragging = false, startX, startY, startTx, startTy;
+
+function applyTransform() {
+  map.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+}
+
+function fitToScreen() {
+  const vw = window.innerWidth, vh = window.innerHeight;
+  scale = Math.min(vw / 4000, vh / 3000) * 0.92;
+  tx = (vw - 4000 * scale) / 2;
+  ty = (vh - 3000 * scale) / 2;
+  applyTransform();
+}
+fitToScreen();
+
+viewport.addEventListener('mousedown', e => {
+  if (e.target.closest('.node')) return;
+  dragging = true;
+  viewport.classList.add('dragging');
+  startX = e.clientX; startY = e.clientY;
+  startTx = tx; startTy = ty;
+});
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  tx = startTx + (e.clientX - startX);
+  ty = startTy + (e.clientY - startY);
+  applyTransform();
+});
+window.addEventListener('mouseup', () => { dragging = false; viewport.classList.remove('dragging'); });
+
+viewport.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? 0.9 : 1.1;
+  const rect = viewport.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  tx = mx - (mx - tx) * delta;
+  ty = my - (my - ty) * delta;
+  scale = Math.max(0.15, Math.min(2.5, scale * delta));
+  applyTransform();
+}, { passive: false });
+
+// Touch support
+let lastDist = null;
+viewport.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    dragging = true;
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    startTx = tx; startTy = ty;
+  }
+}, { passive: true });
+viewport.addEventListener('touchmove', e => {
+  if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.hypot(dx, dy);
+    if (lastDist) {
+      const delta = dist / lastDist;
+      scale = Math.max(0.15, Math.min(2.5, scale * delta));
+      applyTransform();
+    }
+    lastDist = dist;
+  } else if (e.touches.length === 1 && dragging) {
+    tx = startTx + (e.touches[0].clientX - startX);
+    ty = startTy + (e.touches[0].clientY - startY);
+    applyTransform();
+  }
+}, { passive: true });
+viewport.addEventListener('touchend', () => { dragging = false; lastDist = null; });
+
+document.getElementById('zin').addEventListener('click', () => {
+  scale = Math.min(2.5, scale * 1.2);
+  tx = window.innerWidth/2 - (window.innerWidth/2 - tx) * 1.2;
+  ty = window.innerHeight/2 - (window.innerHeight/2 - ty) * 1.2;
+  applyTransform();
+});
+document.getElementById('zout').addEventListener('click', () => {
+  scale = Math.max(0.15, scale / 1.2);
+  tx = window.innerWidth/2 - (window.innerWidth/2 - tx) / 1.2;
+  ty = window.innerHeight/2 - (window.innerHeight/2 - ty) / 1.2;
+  applyTransform();
+});
+document.getElementById('zreset').addEventListener('click', fitToScreen);
+
+// ── Node highlight on click ───────────────────────────────────────
+document.querySelectorAll('.node').forEach(node => {
+  node.addEventListener('click', e => {
+    e.stopPropagation();
+    const active = node.classList.contains('node-active');
+    document.querySelectorAll('.node').forEach(n => n.classList.remove('node-active'));
+    if (!active) node.classList.add('node-active');
+  });
+});
+</script>
+</body>
+</html>
