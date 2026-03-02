@@ -1,99 +1,436 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Retro Arcade</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-    <style>
-      body {
-        margin: 0;
-        background-color: #050505;
-        overflow: hidden;
-      }
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #1a1a1a; 
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #ec4899; 
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #db2777; 
-      }
-      
-      /* CRT Scanline Effect */
-      .scanlines::before {
-        content: " ";
-        display: block;
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-        z-index: 50;
-        background-size: 100% 2px, 3px 100%;
-        pointer-events: none;
-      }
-      
-      /* Flicker Animation */
-      @keyframes flicker {
-        0% { opacity: 0.97; }
-        5% { opacity: 0.95; }
-        10% { opacity: 0.9; }
-        15% { opacity: 0.95; }
-        20% { opacity: 0.99; }
-        25% { opacity: 0.95; }
-        30% { opacity: 0.9; }
-        35% { opacity: 0.96; }
-        40% { opacity: 0.98; }
-        45% { opacity: 0.95; }
-        50% { opacity: 0.99; }
-        55% { opacity: 0.93; }
-        60% { opacity: 0.9; }
-        65% { opacity: 0.96; }
-        70% { opacity: 1; }
-        75% { opacity: 0.97; }
-        80% { opacity: 0.95; }
-        85% { opacity: 0.92; }
-        90% { opacity: 0.98; }
-        95% { opacity: 0.99; }
-        100% { opacity: 0.94; }
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BEN McKENZIE // CYBERSPACE</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
 
-      .animate-flicker {
-        animation: flicker 0.15s infinite;
-      }
-      
-      .font-arcade {
-        font-family: 'Press Start 2P', cursive;
-      }
-      .font-pixel {
-        font-family: 'VT323', monospace;
-      }
-    </style>
+    :root {
+      --neon-cyan: #00fff9;
+      --neon-pink: #ff2d78;
+      --neon-yellow: #f5f500;
+      --dark-bg: #050510;
+      --panel-bg: rgba(0, 255, 249, 0.04);
+      --panel-border: rgba(0, 255, 249, 0.2);
+    }
 
-<link rel="stylesheet" href="/index.css">
-  <script type="importmap">
-{
-  "imports": {
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
-  }
-}
-</script>
-  <script type="module" crossorigin src="/assets/index-BO78fFdd.js"></script>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--dark-bg);
+      color: var(--neon-cyan);
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Grid background */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-image:
+        linear-gradient(rgba(0, 255, 249, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 249, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    canvas#bg {
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 1;
+      opacity: 0.35;
+    }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    /* Glitch text effect */
+    .glitch {
+      position: relative;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(2.5rem, 8vw, 6rem);
+      text-transform: uppercase;
+      color: var(--neon-cyan);
+      letter-spacing: 0.1em;
+      text-shadow:
+        0 0 10px var(--neon-cyan),
+        0 0 20px var(--neon-cyan),
+        0 0 40px var(--neon-cyan);
+      animation: glitch 4s infinite;
+    }
+
+    .glitch::before,
+    .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+    }
+
+    .glitch::before {
+      color: var(--neon-pink);
+      text-shadow: 0 0 10px var(--neon-pink);
+      animation: glitch-top 4s infinite;
+      clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+    }
+
+    .glitch::after {
+      color: var(--neon-yellow);
+      text-shadow: 0 0 10px var(--neon-yellow);
+      animation: glitch-bottom 4s infinite;
+      clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+    }
+
+    @keyframes glitch {
+      0%, 90%, 100% { transform: translate(0); }
+      91% { transform: translate(-2px, 1px); }
+      93% { transform: translate(2px, -1px); }
+      95% { transform: translate(-1px, 2px); }
+      97% { transform: translate(1px, -2px); }
+    }
+
+    @keyframes glitch-top {
+      0%, 90%, 100% { transform: translate(0); }
+      91% { transform: translate(3px, 0); }
+      93% { transform: translate(-3px, 0); }
+      95% { transform: translate(2px, 0); }
+      97% { transform: translate(-2px, 0); }
+    }
+
+    @keyframes glitch-bottom {
+      0%, 90%, 100% { transform: translate(0); }
+      91% { transform: translate(-3px, 0); }
+      93% { transform: translate(3px, 0); }
+      95% { transform: translate(-2px, 0); }
+      97% { transform: translate(2px, 0); }
+    }
+
+    .subtitle {
+      font-size: clamp(0.7rem, 2vw, 1rem);
+      letter-spacing: 0.4em;
+      color: rgba(0, 255, 249, 0.6);
+      text-transform: uppercase;
+      margin-top: 0.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .subtitle span {
+      color: var(--neon-pink);
+    }
+
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 3rem;
+      font-size: 0.75rem;
+      color: rgba(0, 255, 249, 0.5);
+      letter-spacing: 0.15em;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .status-item::before {
+      content: '> ';
+      color: var(--neon-pink);
+    }
+
+    .status-item .blink {
+      animation: blink 1.2s step-end infinite;
+      color: var(--neon-yellow);
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    /* Nav cards */
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .nav-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 2rem;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      text-decoration: none;
+      color: var(--neon-cyan);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+
+    .nav-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 255, 249, 0.08),
+        transparent
+      );
+      transition: left 0.4s ease;
+    }
+
+    .nav-card:hover::before {
+      left: 100%;
+    }
+
+    .nav-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      background: var(--neon-pink);
+      box-shadow: 0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink);
+      transform: scaleY(0);
+      transition: transform 0.25s ease;
+    }
+
+    .nav-card:hover::after {
+      transform: scaleY(1);
+    }
+
+    .nav-card:hover {
+      border-color: var(--neon-cyan);
+      box-shadow:
+        0 0 20px rgba(0, 255, 249, 0.15),
+        inset 0 0 20px rgba(0, 255, 249, 0.05);
+      transform: translateY(-2px);
+    }
+
+    .card-tag {
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      color: var(--neon-pink);
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      line-height: 1;
+    }
+
+    .card-title {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 1.4rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 0 10px var(--neon-cyan);
+      margin-bottom: 0.5rem;
+    }
+
+    .card-desc {
+      font-size: 0.78rem;
+      color: rgba(0, 255, 249, 0.55);
+      line-height: 1.6;
+      letter-spacing: 0.05em;
+    }
+
+    .card-arrow {
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--neon-pink);
+      letter-spacing: 0.2em;
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: all 0.25s ease;
+    }
+
+    .nav-card:hover .card-arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Corner decorations */
+    .corner {
+      position: absolute;
+      width: 12px; height: 12px;
+    }
+
+    .corner-tl { top: 6px; left: 6px; border-top: 1px solid var(--neon-cyan); border-left: 1px solid var(--neon-cyan); }
+    .corner-tr { top: 6px; right: 6px; border-top: 1px solid var(--neon-cyan); border-right: 1px solid var(--neon-cyan); }
+    .corner-bl { bottom: 6px; left: 6px; border-bottom: 1px solid var(--neon-cyan); border-left: 1px solid var(--neon-cyan); }
+    .corner-br { bottom: 6px; right: 6px; border-bottom: 1px solid var(--neon-cyan); border-right: 1px solid var(--neon-cyan); }
+
+    /* Footer */
+    .footer {
+      margin-top: 4rem;
+      font-size: 0.65rem;
+      color: rgba(0, 255, 249, 0.25);
+      letter-spacing: 0.2em;
+      text-align: center;
+    }
+
+    .footer span {
+      color: var(--neon-pink);
+      opacity: 0.6;
+    }
+
+    /* Horizontal rule with neon glow */
+    .neon-line {
+      width: 100%;
+      max-width: 800px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+      box-shadow: 0 0 8px var(--neon-cyan);
+      margin: 2rem 0;
+      opacity: 0.4;
+    }
+  </style>
 </head>
-  <body>
-    <div id="root"></div>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div class="container">
+
+  <h1 class="glitch" data-text="BEN McKENZIE">BEN McKENZIE</h1>
+  <p class="subtitle">// <span>SYSTEM ONLINE</span> // NEURAL LINK ESTABLISHED //</p>
+
+  <div class="status-bar">
+    <span class="status-item">NODE_ENV: PRODUCTION</span>
+    <span class="status-item">UPTIME: <span class="blink">█</span> ACTIVE</span>
+    <span class="status-item">SECTOR: CYBERSPACE</span>
+  </div>
+
+  <div class="nav-grid">
+
+    <a class="nav-card" href="resume.html">
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+      <div class="card-tag">// FILE_001</div>
+      <div class="card-icon">📄</div>
+      <div class="card-title">Resume</div>
+      <div class="card-desc">Full dossier. Skills, experience,<br>mission history. Clearance level: open.</div>
+      <div class="card-arrow">ACCESS FILE &rarr;</div>
+    </a>
+
+    <a class="nav-card" href="/arcade">
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+      <div class="card-tag">// FILE_002</div>
+      <div class="card-icon">🕹️</div>
+      <div class="card-title">Arcade</div>
+      <div class="card-desc">Enter the grid. Play, compete,<br>chase the high score. Quarters optional.</div>
+      <div class="card-arrow">JACK IN &rarr;</div>
+    </a>
+
+  </div>
+
+  <div class="neon-line"></div>
+
+  <div class="footer">
+    &copy; <span>2026</span> BEN McKENZIE &mdash; ALL RIGHTS RESERVED &mdash; <span>UNAUTHORIZED ACCESS WILL BE MET WITH EXTREME PREJUDICE</span>
+  </div>
+
+</div>
+
+<script>
+  // Falling characters background (Matrix-style rain)
+  const canvas = document.getElementById('bg');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789ABCDEF><:/\\|';
+  const fontSize = 14;
+  let columns = Math.floor(canvas.width / fontSize);
+  let drops = Array(columns).fill(1);
+
+  function draw() {
+    ctx.fillStyle = 'rgba(5, 5, 16, 0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    columns = Math.floor(canvas.width / fontSize);
+    if (drops.length !== columns) {
+      drops = Array(columns).fill(1);
+    }
+
+    for (let i = 0; i < drops.length; i++) {
+      const char = chars[Math.floor(Math.random() * chars.length)];
+      const x = i * fontSize;
+      const y = drops[i] * fontSize;
+
+      // Head of the stream is brighter
+      if (drops[i] * fontSize < canvas.height * 0.1) {
+        ctx.fillStyle = '#ffffff';
+      } else {
+        ctx.fillStyle = Math.random() > 0.95 ? '#ff2d78' : '#00fff9';
+      }
+
+      ctx.font = `${fontSize}px 'Share Tech Mono', monospace`;
+      ctx.fillText(char, x, y);
+
+      if (y > canvas.height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
+    }
+  }
+
+  setInterval(draw, 45);
+</script>
+
 </body>
 </html>
